@@ -23,8 +23,8 @@ class VAE(nn.Module):
     def model(self, x):
         pyro.module("decoder", self.decoder)
         with pyro.plate("data", x.shape[0]):
-            z_mean = torch.zeros(x.shape[0], self.z_dim, dtype=x.dtype, device=x.device)
-            z_var = torch.ones(x.shape[0], self.z_dim, dtype=x.dtype, device=x.device)
+            z_mean = torch.zeros(x.shape[0], self.z_dim, dtype=x.dtype, device="cuda:0")
+            z_var = torch.ones(x.shape[0], self.z_dim, dtype=x.dtype, device="cuda:0")
             
             z = pyro.sample("z", pdist.Normal(z_mean, z_var).to_event(1))
             
