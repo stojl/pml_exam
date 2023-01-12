@@ -28,7 +28,7 @@ class VAE(nn.Module):
             
             z = pyro.sample("z", pdist.Normal(z_mean, z_var).to_event(1))
             
-            img = self.decoder.forward(z).reshape(-1, 784)
+            img = self.decoder.forward(z)
             
             pyro.sample("obs", pdist.Bernoulli(img, validate_args = False).to_event(1), obs=x.reshape(-1, 784))
             
