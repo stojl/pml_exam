@@ -21,7 +21,7 @@ class DiffusionModel(nn.Module):
     def alphabar(self, t):
         alpha = torch.zeros(t.shape[0], device=self.device)
         for idx, s in enumerate(t):
-            alpha[idx] = torch.prod(self.beta[0:s])
+            alpha[idx] = torch.prod(1 - self.beta[0:s])
         return alpha
     
     def embedtime(self, t, embedding_size, dimensions):
