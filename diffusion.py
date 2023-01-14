@@ -8,7 +8,9 @@ class DiffusionModel(nn.Module):
         self.device = device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.beta = beta.to(self.device) # Decay schedule
         self.T = beta.shape[0]
-        
+        if torch.cuda.is_available:
+            self.cuda()
+            
         self.conv = nn.Conv2d(1, 16, 3, padding =1)
         self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
         self.conv3 = nn.Conv2d(32, 16, 3, padding=1)
