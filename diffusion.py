@@ -27,7 +27,25 @@ class DiffusionModel(nn.Module):
         self.c6 = nn.Conv2d(10, 10, 3, padding=1)
         self.b6 = nn.LayerNorm([28, 28])
         
-        self.c7 = nn.Conv2d(10, 1, 3, padding=1)
+        self.c7 = nn.Conv2d(1, 10, 3, padding=1)
+        self.b7 = nn.LayerNorm([28, 28])
+        
+        self.c8 = nn.Conv2d(10, 10, 3, padding=1)
+        self.b8 = nn.LayerNorm([28, 28])
+        
+        self.c9 = nn.Conv2d(10, 10, 3, padding=1)
+        self.b9 = nn.LayerNorm([28, 28])
+        
+        self.c10 = nn.Conv2d(10, 10, 3, padding=1)
+        self.b10 = nn.LayerNorm([28, 28])
+        
+        self.c11 = nn.Conv2d(10, 10, 3, padding=1)
+        self.b11 = nn.LayerNorm([28, 28])
+        
+        self.c12 = nn.Conv2d(10, 10, 3, padding=1)
+        self.b12 = nn.LayerNorm([28, 28])
+        
+        self.c13 = nn.Conv2d(10, 1, 3, padding=1)
         
         self.relu = nn.ReLU()
         
@@ -98,6 +116,30 @@ class DiffusionModel(nn.Module):
         x = self.b6(x)
         x = self.relu(x)
         
-        x = self.c7(x)
+        x = self.c7(x) + T
+        x = self.b7(x)
+        x = self.relu(x)
+        
+        x = self.c8(x) + T
+        x = self.b8(x)
+        x = self.relu(x)
+        
+        x = self.c9(x) + T
+        x = self.b9(x)
+        x = self.relu(x)
+        
+        x = self.c10(x) + T
+        x = self.b10(x)
+        x = self.relu(x)
+        
+        x = self.c11(x) + T
+        x = self.b11(x)
+        x = self.relu(x)
+        
+        x = self.c12(x) + T
+        x = self.b12(x)
+        x = self.relu(x)
+        
+        x = self.c13(x)
         
         return x
