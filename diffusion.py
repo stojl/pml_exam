@@ -10,40 +10,40 @@ class DiffusionModel(nn.Module):
         self.T = beta.shape[0]
         
         self.c1 = nn.Conv2d(1, 10, 3, padding=1)
-        self.b1 = nn.LayerNorm([28, 28])
+        self.b1 = nn.GroupNorm(1, 10)
         
         self.c2 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b2 = nn.LayerNorm([28, 28])
+        self.b2 = nn.GroupNorm(1, 10)
         
         self.c3 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b3 = nn.LayerNorm([28, 28])
+        self.b3 = nn.GroupNorm(1, 10)
         
         self.c4 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b4 = nn.LayerNorm([28, 28])
+        self.b4 = nn.GroupNorm(1, 10)
         
         self.c5 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b5 = nn.LayerNorm([28, 28])
+        self.b5 = nn.GroupNorm(1, 10)
         
         self.c6 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b6 = nn.LayerNorm([28, 28])
+        self.b6 = nn.GroupNorm(1, 10)
         
         self.c7 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b7 = nn.LayerNorm([28, 28])
+        self.b7 = nn.GroupNorm(1, 10)
         
         self.c8 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b8 = nn.LayerNorm([28, 28])
+        self.b8 = nn.GroupNorm(1, 10)
         
         self.c9 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b9 = nn.LayerNorm([28, 28])
+        self.b9 = nn.GroupNorm(1, 10)
         
         self.c10 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b10 = nn.LayerNorm([28, 28])
+        self.b10 = nn.GroupNorm(1, 10)
         
         self.c11 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b11 = nn.LayerNorm([28, 28])
+        self.b11 = nn.GroupNorm(1, 10)
         
         self.c12 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b12 = nn.LayerNorm([28, 28])
+        self.b12 = nn.GroupNorm(1, 10)
         
         self.c13 = nn.Conv2d(10, 1, 3, padding=1)
         
