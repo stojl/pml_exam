@@ -9,18 +9,10 @@ class DiffusionModel(nn.Module):
         self.beta = beta.to(self.device) # Decay schedule
         self.T = beta.shape[0]
         
-        self.c11 = nn.Conv2d(1, 16, 3, padding=1)   # (1, 28, 28) -> (16, 28, 28)
-        self.c12 = nn.Conv2d(16, 16, 3, padding=1)  # (16, 28, 28) -> (16, 28, 28)
-        self.p1 = nn.MaxPool2d(2) # (16, 28, 28) -> (16, 14, 14)
-
-        # BOTTOM
-        self.c21 = nn.Conv2d(16, 32, 3, padding = 1) # (16, 14, 14) -> (32, 14, 14)
-        self.c22 = nn.Conv2d(32, 32, 3, padding = 1) # (32, 14, 14) -> (32, 14, 14)
-        self.p2 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True) # (32, 14, 14) -> (32, 28, 28)
-        
-        # OUT
-        self.c31 = nn.Conv2d(32, 16, 3, padding=1) # (32, 28, 28) -> (16, 28, 28)
-        self.c32 = nn.Conv2d(16, 1, 3, padding=1) # (16, 28, 28) -> (1, 28, 28)
+        self.c1 = nn.Conv2d(1, 16, 3, padding=1)   # (1, 28, 28) -> (16, 28, 28)
+        self.c2 = nn.Conv2d(16, 32, 3, padding=1)
+        self.c3 = nn.Conv2d(32, 16, 3, padding=1)
+        self.c4 = nn.Conv2d(16, 1, 3, padding=1)
         
         self.relu = nn.ReLU()
         
@@ -53,7 +45,7 @@ class DiffusionModel(nn.Module):
                 z = torch.randn(784, device=self.device)
                 xt = samples[t + 1]
                 eps = self.forward(xt.view(1, 1, 28, 28), torch.tensor([t + 1], device=self.device)).view(784)
-                samples[t] = (xt - beta * eps / (torch.sqrt(1 - alfabar))) / torch.sqrt(alfa) + beta * z
+                samples[t] = (xt - beta * eps / (torch.sqrt(1 - alfabar))) / torch.sqrt(alfa) + torch.sqrt(beta) * z
             
             beta = self.beta[0]
             alfa = 1 - beta
@@ -65,18 +57,12 @@ class DiffusionModel(nn.Module):
         return samples
         
     def forward(self, x, t):
-        x = self.c11(x)
+        x = self.c1(x) + self.embedtime(t, 16, 28)
         x = self.relu(x)
-        x = self.c12(x) + self.embedtime(t, 16, 28)
-        x = self.relu(self.p1(x))
+        x = self.c2(x) + self.embedtime(t, 32, 28)
+        x = self.relu(x)
+        x = self.c3(x) + self.embedtime(t, 16, 28)
+        x = self.relu(x)
+        x = self.c4(x)
         
-        y = self.c21(x)
-        y = self.relu(y)
-        y = self.c22(y) + self.embedtime(t, 32, 14)
-        y = self.relu(y)
-        y = self.p2(y)
-        y = self.relu(y)
-        
-        z = self.c31(y) + self.embedtime(t, 16, 28)
-        z = self.c32(z)
-        return z
+        return x
