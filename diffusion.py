@@ -9,11 +9,25 @@ class DiffusionModel(nn.Module):
         self.beta = beta.to(self.device) # Decay schedule
         self.T = beta.shape[0]
         
-        self.c1 = nn.Conv2d(1, 64, 3, padding=1)
-        self.c2 = nn.Conv2d(64, 32, 3, padding=1)
-        self.c3 = nn.Conv2d(32, 16, 3, padding=1)
-        self.c4 = nn.Conv2d(16, 8, 3, padding=1)
-        self.c5 = nn.Conv2d(8, 1, 3, padding=1)
+        self.c1 = nn.Conv2d(1, 10, 3, padding=1)
+        self.b1 = nn.BatchNorm2d(10)
+        
+        self.c2 = nn.Conv2d(10, 10, 3, padding=1)
+        self.b2 = nn.BatchNorm2d(10)
+        
+        self.c3 = nn.Conv2d(10, 10, 3, padding=1)
+        self.b3 = nn.BatchNorm2d(10)
+        
+        self.c4 = nn.Conv2d(10, 10, 3, padding=1)
+        self.b4 = nn.BatchNorm2d(10)
+        
+        self.c5 = nn.Conv2d(10, 10, 3, padding=1)
+        self.b5 = nn.BatchNorm2d(10)
+        
+        self.c6 = nn.Conv2d(10, 10, 3, padding=1)
+        self.b6 = nn.BatchNorm2d(10)
+        
+        self.c7 = nn.Conv2d(10, 1, 3, padding=1)
         
         self.relu = nn.ReLU()
         
@@ -58,18 +72,32 @@ class DiffusionModel(nn.Module):
         return samples
         
     def forward(self, x, t):
-        x = self.c1(x) + self.embedtime(t, 64, 28)
+        T = self.embedtime(t, 10, 28)
+        
+        x = self.c1(x) + T
+        x = self.b1(x)
         x = self.relu(x)
         
-        x = self.c2(x) + self.embedtime(t, 32, 28)
+        x = self.c2(x) + T
+        x = self.b2(x)
         x = self.relu(x)
         
-        x = self.c3(x) + self.embedtime(t, 16, 28)
+        x = self.c3(x) + T
+        x = self.b3(x)
         x = self.relu(x)
         
-        x = self.c4(x) + self.embedtime(t, 8, 28)
+        x = self.c4(x) + T
+        x = self.b4(x)
         x = self.relu(x)
         
-        x = self.c5(x)
+        x = self.c5(x) + T
+        x = self.b5(x)
+        x = self.relu(x)
+        
+        x = self.c6(x) + T
+        x = self.b6(x)
+        x = self.relu(x)
+        
+        x = self.c7(x)
         
         return x
