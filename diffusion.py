@@ -9,12 +9,11 @@ class DiffusionModel(nn.Module):
         self.beta = beta.to(self.device) # Decay schedule
         self.T = beta.shape[0]
         
-        self.c1 = nn.Conv2d(1, 16, 3)
-        self.c2 = nn.Conv2d(16, 32, 3)
-        self.p1 = nn.MaxPool2d(2)
-        self.c3 = nn.Conv2d(32, 64, 3)
-        self.l1 = nn.Linear(64 * 10 * 10, 1000)
-        self.l2 = nn.Linear(1000, 784)
+        self.c1 = nn.Conv2d(1, 64, 3, padding=1)
+        self.c2 = nn.Conv2d(64, 32, 3, padding=1)
+        self.c3 = nn.Conv2d(32, 16, 3, padding=1)
+        self.c4 = nn.Conv2d(16, 8, 3, padding=1)
+        self.c5 = nn.Conv2d(8, 1, 3, padding=1)
         
         self.relu = nn.ReLU()
         
@@ -59,16 +58,18 @@ class DiffusionModel(nn.Module):
         return samples
         
     def forward(self, x, t):
-        x = self.c1(x) + self.embedtime(t, 16, 26)
+        x = self.c1(x) + self.embedtime(t, 64, 28)
         x = self.relu(x)
-        x = self.c2(x) + self.embedtime(t, 32, 24)
-        x = self.p1(x)
-        x = self.relu(x)
-        x = self.c3(x) + self.embedtime(t, 64, 10)
-        x = self.relu(x)
-        x = x.view(-1, 64 * 10 * 10)
-        x = self.l1(x)
-        x = self.relu(x)
-        x = self.l2(x)
         
-        return x.view(-1, 1, 28, 28)
+        x = self.c2(x) + self.embedtime(t, 32, 28)
+        x = self.relu(x)
+        
+        x = self.c3(x) + self.embedtime(t, 16, 28)
+        x = self.relu(x)
+        
+        x = self.c4(x) + self.embedtime(t, 8, 28)
+        x = self.relu(x)
+        
+        x = self.c5(x)
+        
+        return x
