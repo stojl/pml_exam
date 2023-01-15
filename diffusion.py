@@ -27,7 +27,7 @@ class DiffusionModel(nn.Module):
         self.c6 = nn.Conv2d(10, 10, 3, padding=1)
         self.b6 = nn.LayerNorm([28, 28])
         
-        self.c7 = nn.Conv2d(1, 10, 3, padding=1)
+        self.c7 = nn.Conv2d(10, 10, 3, padding=1)
         self.b7 = nn.LayerNorm([28, 28])
         
         self.c8 = nn.Conv2d(10, 10, 3, padding=1)
