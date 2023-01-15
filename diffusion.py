@@ -10,22 +10,22 @@ class DiffusionModel(nn.Module):
         self.T = beta.shape[0]
         
         self.c1 = nn.Conv2d(1, 10, 3, padding=1)
-        self.b1 = nn.BatchNorm2d(10)
+        self.b1 = nn.LayerNorm([28, 28])
         
         self.c2 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b2 = nn.BatchNorm2d(10)
+        self.b2 = nn.LayerNorm([28, 28])
         
         self.c3 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b3 = nn.BatchNorm2d(10)
+        self.b3 = nn.LayerNorm([28, 28])
         
         self.c4 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b4 = nn.BatchNorm2d(10)
+        self.b4 = nn.LayerNorm([28, 28])
         
         self.c5 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b5 = nn.BatchNorm2d(10)
+        self.b5 = nn.LayerNorm([28, 28])
         
         self.c6 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b6 = nn.BatchNorm2d(10)
+        self.b6 = nn.LayerNorm([28, 28])
         
         self.c7 = nn.Conv2d(10, 1, 3, padding=1)
         
