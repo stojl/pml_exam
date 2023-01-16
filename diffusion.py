@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.distributions as tdist
-import torch.functional as F
+import torch.nn.functional as F
 
 class SelfAttention(nn.Module):
     def __init__(self, h_size):
