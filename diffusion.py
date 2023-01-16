@@ -10,40 +10,40 @@ class DiffusionModel(nn.Module):
         self.T = beta.shape[0]
         
         self.c1 = nn.Conv2d(1, 10, 3, padding=1)
-        self.b1 = nn.LayerNorm([28, 28])
+        self.b1 = nn.GroupNorm(1, 10)
         
         self.c2 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b2 = nn.LayerNorm([28, 28])
+        self.b2 = nn.GroupNorm(1, 10)
         
         self.c3 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b3 = nn.LayerNorm([28, 28])
+        self.b3 = nn.GroupNorm(1, 10)
         
         self.c4 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b4 = nn.LayerNorm([28, 28])
+        self.b4 = nn.GroupNorm(1, 10)
         
         self.c5 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b5 = nn.LayerNorm([28, 28])
+        self.b5 = nn.GroupNorm(1, 10)
         
         self.c6 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b6 = nn.LayerNorm([28, 28])
+        self.b6 = nn.GroupNorm(1, 10)
         
         self.c7 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b7 = nn.LayerNorm([28, 28])
+        self.b7 = nn.GroupNorm(1, 10)
         
         self.c8 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b8 = nn.LayerNorm([28, 28])
+        self.b8 = nn.GroupNorm(1, 10)
         
         self.c9 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b9 = nn.LayerNorm([28, 28])
+        self.b9 = nn.GroupNorm(1, 10)
         
         self.c10 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b10 = nn.LayerNorm([28, 28])
+        self.b10 = nn.GroupNorm(1, 10)
         
         self.c11 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b11 = nn.LayerNorm([28, 28])
+        self.b11 = nn.GroupNorm(1, 10)
         
         self.c12 = nn.Conv2d(10, 10, 3, padding=1)
-        self.b12 = nn.LayerNorm([28, 28])
+        self.b12 = nn.GroupNorm(1, 10)
         
         self.c13 = nn.Conv2d(10, 1, 3, padding=1)
         
@@ -56,14 +56,10 @@ class DiffusionModel(nn.Module):
         return alpha
     
     def embedtime(self, t, embedding_size, dimensions):
-        emb = torch.zeros((embedding_size // 2) * t.shape[0], device=self.device).reshape(t.shape[0], embedding_size // 2)
-        emb2 = torch.zeros((embedding_size // 2) * t.shape[0], device=self.device).reshape(t.shape[0], embedding_size // 2)
-        s = torch.linspace(2, embedding_size // 2, embedding_size // 2, device=self.device)
-        for idx, samp in enumerate(t):
-            emb[idx] = torch.sin(2 * s * torch.pi * samp / self.T)
-            emb2[idx] = torch.cos(2 * s * torch.pi * samp / self.T)
-
-        return torch.cat([emb, emb2], dim = 1).view(-1, embedding_size, 1, 1).repeat(1, 1, dimensions, dimensions)
+        w = 1.0 / (10000 ** (torch.arange(0, embedding_size, 2, dtype=torch.float32) / embedding_size))
+        y = torch.sin(t.view(t.shape[0], 1).repeat(1, embedding_size // 2) * w)
+        x = torch.cos(t.view(t.shape[0], 1).repeat(1, embedding_size // 2) * w)
+        return torch.cat([x, y], dim=1).view(-1, embedding_size, 1, 1).repeat(1, 1, dimensions, dimensions)
     
     def sample_image(self):
         samples = torch.zeros((self.T + 1, 784), device=self.device)
@@ -92,34 +88,25 @@ class DiffusionModel(nn.Module):
     def forward(self, x, t):
         T = self.embedtime(t, 10, 28)
         
-        x = self.c1(x)
+        x = self.c1(x) + T
+        x = self.relu(x)
+        
+        x = self.c2(x) + T
         x = self.b1(x)
         x = self.relu(x)
         
-        x = self.c2(x)
+        x = self.c3(x) + T
         x = self.b2(x)
         x = self.relu(x)
         
-        x = self.c3(x)
+        x = self.c4(x) + T
         x = self.b3(x)
         x = self.relu(x)
         
-        x = self.c4(x)
+        x = self.c5(x) + T
         x = self.b4(x)
         x = self.relu(x)
-        
-        x = self.c5(x)
-        x = self.b5(x)
-        x = self.relu(x)
-        
-        x = self.c6(x)
-        x = self.b6(x)
-        x = self.relu(x)
-        
-        x = self.c7(x)
-        x = self.b7(x)
-        x = self.relu(x)
-        
+    
         x = self.c13(x)
         
         return x
