@@ -34,6 +34,14 @@ class DiffusionModel(nn.Module):
             nn.LayerNorm((28, 28))
         )
         
+        self.l4 = nn.Sequential(
+            nn.Conv2d(16, 16, 3, padding=1),
+            nn.LayerNorm((28, 28)),
+            nn.ReLU(),
+            nn.Conv2d(16, 16, 3, padding=1),
+            nn.LayerNorm((28, 28))
+        )
+        
         self.cout = nn.Conv2d(16, 1, 3, padding=1)
         
         self.relu = nn.ReLU()
@@ -84,6 +92,9 @@ class DiffusionModel(nn.Module):
         x = self.relu(x)
         
         x = self.l3(x) + T
+        x = self.relu(x)
+        
+        x = self.l4(x) + T
         x = self.relu(x)
         
         x = self.cout(x)
