@@ -92,52 +92,32 @@ class DiffusionModel(nn.Module):
     def forward(self, x, t):
         T = self.embedtime(t, 10, 28)
         
-        x = self.c1(x) + T
+        x = self.c1(x)
         x = self.b1(x)
         x = self.relu(x)
         
-        x = self.c2(x) + T
+        x = self.c2(x)
         x = self.b2(x)
         x = self.relu(x)
         
-        x = self.c3(x) + T
+        x = self.c3(x)
         x = self.b3(x)
         x = self.relu(x)
         
-        x = self.c4(x) + T
+        x = self.c4(x)
         x = self.b4(x)
         x = self.relu(x)
         
-        x = self.c5(x) + T
+        x = self.c5(x)
         x = self.b5(x)
         x = self.relu(x)
         
-        x = self.c6(x) + T
+        x = self.c6(x)
         x = self.b6(x)
         x = self.relu(x)
         
-        x = self.c7(x) + T
+        x = self.c7(x)
         x = self.b7(x)
-        x = self.relu(x)
-        
-        x = self.c8(x) + T
-        x = self.b8(x)
-        x = self.relu(x)
-        
-        x = self.c9(x) + T
-        x = self.b9(x)
-        x = self.relu(x)
-        
-        x = self.c10(x) + T
-        x = self.b10(x)
-        x = self.relu(x)
-        
-        x = self.c11(x) + T
-        x = self.b11(x)
-        x = self.relu(x)
-        
-        x = self.c12(x) + T
-        x = self.b12(x)
         x = self.relu(x)
         
         x = self.c13(x)
