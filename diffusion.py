@@ -94,9 +94,6 @@ class DiffusionModel(nn.Module):
         x = self.l3(x) + T
         x = self.relu(x)
         
-        x = self.l4(x) + T
-        x = self.relu(x)
-        
         x = self.cout(x)
 
         return x
