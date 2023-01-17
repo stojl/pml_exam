@@ -2,6 +2,7 @@ from torch import nn
 import torch
 from torch.distributions import constraints
 import pyro
+
 import pyro.distributions as pdist
 
 class BayesianVAE(nn.Module):
@@ -29,19 +30,18 @@ class BayesianVAE(nn.Module):
             
     def model(self, x):
         
+        w1 = pyro.sample("w1", pdist.Normal(0, self.sd).expand([self.z_dim, self.h2_dim]).to_event(2))
+        b1 = pyro.sample("b1", pdist.Normal(0, self.sd).expand([self.h2_dim]).to_event(1))
         
-        w1 = pyro.sample("w1", pdist.Normal(0, self.sd).expand([self.z_dim, self.h2_dim]).to_event(2), device=self.device)
-        b1 = pyro.sample("b1", pdist.Normal(0, self.sd).expand([self.h2_dim]).to_event(1), device=self.device)
+        w2 = pyro.sample("w2", pdist.Normal(0, self.sd).expand([self.h2_dim, self.h1_dim]).to_event(2))
+        b2 = pyro.sample("b2", pdist.Normal(0, self.sd).expand([self.h1_dim]).to_event(1))
         
-        w2 = pyro.sample("w2", pdist.Normal(0, self.sd).expand([self.h2_dim, self.h1_dim]).to_event(2), device=self.device)
-        b2 = pyro.sample("b2", pdist.Normal(0, self.sd).expand([self.h1_dim]).to_event(1), device=self.device)
-        
-        w3 = pyro.sample("w3", pdist.Normal(0, self.sd).expand([self.h1_dim, 784]).to_event(2), device=self.device)
-        b3 = pyro.sample("b3", pdist.Normal(0, self.sd).expand([784]).to_event(1), device=self.device)
+        w3 = pyro.sample("w3", pdist.Normal(0, self.sd).expand([self.h1_dim, 784]).to_event(2))
+        b3 = pyro.sample("b3", pdist.Normal(0, self.sd).expand([784]).to_event(1))
 
         with pyro.plate("data", x.shape[0]):
-            z_mean = torch.zeros(x.shape[0], self.z_dim, dtype=x.dtype, device=x.device)
-            z_var = torch.ones(x.shape[0], self.z_dim, dtype=x.dtype, device=x.device)
+            z_mean = torch.zeros(x.shape[0], self.z_dim, dtype=x.dtype, device=self.device)
+            z_var = torch.ones(x.shape[0], self.z_dim, dtype=x.dtype, device=self.device)
             
             z = pyro.sample("z", pdist.Normal(z_mean, z_var).to_event(1))
             
@@ -54,18 +54,18 @@ class BayesianVAE(nn.Module):
     def guide(self, x):
         pyro.module("encoder", self.encoder)
         
-        w1_map = pyro.param("w1_map", torch.tensor(0.0))
-        b1_map = pyro.param("b1_map", torch.tensor(1.5))
+        w1_map = pyro.param("w1_map", torch.tensor(0.0, device=self.device))
+        b1_map = pyro.param("b1_map", torch.tensor(1.5, device=self.device))
         w1 = pyro.sample("w1", pdist.Delta(w1_map).expand([self.z_dim, self.h2_dim]).to_event(2))
         b1 = pyro.sample("b1", pdist.Delta(b1_map).expand([self.h2_dim]).to_event(1))
         
-        w2_map = pyro.param("w2_map", torch.tensor(0.0))
-        b2_map = pyro.param("b2_map", torch.tensor(0.5))
+        w2_map = pyro.param("w2_map", torch.tensor(0.0, device=self.device))
+        b2_map = pyro.param("b2_map", torch.tensor(0.5, device=self.device))
         w2 = pyro.sample("w2", pdist.Delta(w2_map).expand([self.h2_dim, self.h1_dim]).to_event(2))
         b2 = pyro.sample("b2", pdist.Delta(b2_map).expand([self.h1_dim]).to_event(1))
         
-        w3_map = pyro.param("w3_map", torch.tensor(0.0))
-        b3_map = pyro.param("b3_map", torch.tensor(2.0))
+        w3_map = pyro.param("w3_map", torch.tensor(0.0, device=self.device))
+        b3_map = pyro.param("b3_map", torch.tensor(2.0, device=self.device))
         w3 = pyro.sample("w3", pdist.Delta(w3_map).expand([self.h1_dim, 784]).to_event(2))
         b3 = pyro.sample("b3", pdist.Delta(b3_map).expand([784]).to_event(1))
         
