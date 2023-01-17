@@ -44,10 +44,13 @@ class BayesianVAE(nn.Module):
             z_var = torch.ones(x.shape[0], self.z_dim, dtype=x.dtype, device=self.device)
             
             z = pyro.sample("z", pdist.Normal(z_mean, z_var).to_event(1))
+            print(z.device)
             h1 = self.relu(z @ w1 + b1)
+            print(h1.device)
             h2 = self.relu(h1 @ w2 + b2)
+            print(h2.device)
             img = self.sigmoid(h2 @ w3 + b3)
-            
+            print(img.device)
             pyro.sample("obs", pdist.Bernoulli(img, validate_args = False).to_event(1), obs=x.reshape(-1, 784))
             
     def guide(self, x):
@@ -72,7 +75,6 @@ class BayesianVAE(nn.Module):
         
         with pyro.plate("data", x.shape[0]):
             z_mean, z_var = self.encoder.forward(x)
-            print(z_mean.device)
             # Reparametrization trick in disguise
             pyro.sample("z", pdist.Normal(z_mean, z_var).to_event(1))
             
