@@ -6,7 +6,7 @@ import pyro
 import pyro.distributions as pdist
 
 class BayesianVAE(nn.Module):
-    def __init__(self, encoder, decoder, z_dim, h1_dim, h2_dim, sd, use_cuda=False):
+    def __init__(self, encoder, z_dim, h1_dim, h2_dim, sd, use_cuda=False):
         super().__init__()
         
         self.use_cuda = use_cuda
@@ -23,7 +23,6 @@ class BayesianVAE(nn.Module):
         self.h1_dim = h1_dim
         self.h2_dim = h2_dim
         self.encoder = encoder
-        self.decoder = decoder
         
         self.sd = torch.tensor(sd, device = self.device)
         
@@ -80,6 +79,54 @@ class BayesianVAE(nn.Module):
             pyro.sample("z", pdist.Normal(z_mean, z_var).to_event(1))
             
     
+    def decoder(self, z):
+        w1_mean = pyro.param("w1_mean").detach()
+        w1_sd = pyro.param("w1_sd").detach()
+        b1_mean = pyro.param("b1_mean").detach()
+        b1_sd = pyro.param("b1_sd").detach()
+        
+        w1 = torch.distributions.Normal(w1_mean, w1_sd).sample()
+        b1 = torch.distributions.Normal(b1_mean, b1_sd).sample()
+        w1 = nn.Parameter(w1)
+        b1 = nn.Parameter(b1)
+
+        w2_mean = pyro.param("w2_mean").detach()
+        w2_sd = pyro.param("w2_sd").detach()
+        b2_mean = pyro.param("b2_mean").detach()
+        b2_sd = pyro.param("b2_sd").detach()
+        
+        w2 = torch.distributions.Normal(w2_mean, w2_sd).sample()
+        b2 = torch.distributions.Normal(b2_mean, b2_sd).sample()
+        w2 = nn.Parameter(w2)
+        b2 = nn.Parameter(b2)
+
+        w3_mean = pyro.param("w3_mean").detach()
+        w3_sd = pyro.param("w3_sd").detach()
+        b3_mean = pyro.param("b3_mean").detach()
+        b3_sd = pyro.param("b3_sd").detach()
+        
+        w3 = torch.distributions.Normal(w3_mean, w3_sd).sample()
+        b3 = torch.distributions.Normal(b3_mean, b3_sd).sample()
+        w3 = nn.Parameter(w3)
+        b3 = nn.Parameter(b3)
+        
+        l1 = nn.Linear(self.z_dim, self.h2_dim)
+        l1.weight = w1
+        l1.bias = b1
+        
+        l2 = nn.Linear(self.h2_dim, self.h1_dim)
+        l2.weight = w2
+        l2.bias = b2
+        
+        l3 = nn.Linear(self.h1_dim, 784)
+        l3.weight = w3
+        l3.bias = b3
+        
+        z = self.relu(l1(z))
+        z = self.relu(l2(z))
+        z = self.sigmoid(l3(z))
+        
+        return z
             
     def reconstruct_img(self, x):
         z_mean, z_var = self.encoder(x)
