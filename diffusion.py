@@ -110,7 +110,6 @@ class DiffusionModel2(nn.Module):
 
     def forward(self, x, t):
         T = self.embedtime(t, 32)
-        print(T.shape)
         x_to_U3 = self.D1(x, T)
         x_to_U2 = self.D2(x_to_U3, T)
         x = self.D3(x_to_U2, T)
@@ -129,7 +128,7 @@ class DiffusionModel2(nn.Module):
 class DiffusionModel(nn.Module):
     def __init__(self, beta):
         super(DiffusionModel, self).__init__()
-        self.device = device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.beta = beta.to(self.device) # Decay schedule
         self.T = beta.shape[0]
         
