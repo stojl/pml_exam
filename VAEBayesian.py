@@ -77,6 +77,55 @@ class BayesianVAE(nn.Module):
             # Reparametrization trick in disguise
             pyro.sample("z", pdist.Normal(z_mean, z_var).to_event(1))
             
+    def decoder(self, z):
+        w1_mean = pyro.param("w1_mean").item()
+        w1_sd = pyro.param("w1_sd").item()
+        b1_mean = pyro.param("b1_mean").item()
+        b1_sd = pyro.param("b1_sd").item()
+        
+        w1 = torch.distributions.Normal(w1_mean, w1_sd).expand([self.z_dim, self.h2_dim]).sample()
+        b1 = torch.distributions.Normal(b1_mean, b1_sd).expand([self.h2_dim]).sample()
+        w1 = nn.Parameter(w1)
+        b1 = nn.Parameter(b1)
+
+        w2_mean = pyro.param("w2_mean").item()
+        w2_sd = pyro.param("w2_sd").item()
+        b2_mean = pyro.param("b2_mean").item()
+        b2_sd = pyro.param("b2_sd").item()
+        
+        w2 = torch.distributions.Normal(w2_mean, w2_sd).expand([self.h2_dim, self.h1_dim]).sample()
+        b2 = torch.distributions.Normal(b2_mean, b2_sd).expand([self.h1_dim]).sample()
+        w2 = nn.Parameter(w2)
+        b2 = nn.Parameter(b2)
+
+        w3_mean = pyro.param("w3_mean").item()
+        w3_sd = pyro.param("w3_sd").item()
+        b3_mean = pyro.param("b3_mean").item()
+        b3_sd = pyro.param("b3.sd").item()
+        
+        w3 = torch.distributions.Normal(w3_mean, w3_sd).expand([self.h1_dim, 784]).sample()
+        b3 = torch.distributions.Normal(b3_mean, b3_sd).expand([784]).sample()
+        w3 = nn.Parameter(w3)
+        b3 = nn.Parameter(b3)
+        
+        l1 = nn.Linear(self.z_dim, self.h2_dim)
+        l1.weight = w1
+        l1.bias = b1
+        
+        l2 = nn.Linear(self.h2_dim, self.h1_dim)
+        l2.weight = w2
+        l2.bias = b2
+        
+        l3 = nn.Linear(self.h1_dim, 784)
+        l3.weight = w3
+        l3.bias = b3
+        
+        z = self.relu(l1(z))
+        z = self.relu(l2(z))
+        z = self.sigmoid(l3(z))
+        
+        return z
+            
     def reconstruct_img(self, x):
         z_mean, z_var = self.encoder(x)
         
