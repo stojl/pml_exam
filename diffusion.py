@@ -127,7 +127,7 @@ class DiffusionModel2(nn.Module):
         x = self.U3(x, T)
         
         Tx = self.relu(self.time(T))
-        x = Tx + x
+        x = Tx.view(-1, 32, 28, 28) + x
         x = self.ln(self.relu(self.Out1(x)))
         x = self.Out2(x)
 
