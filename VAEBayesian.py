@@ -38,6 +38,8 @@ class BayesianVAE(nn.Module):
         
         w3 = pyro.sample("w3", pdist.Normal(0, self.sd).expand([self.h1_dim, 784]).to_event(2))
         b3 = pyro.sample("b3", pdist.Normal(0, self.sd).expand([784]).to_event(1))
+        
+        print(b3.device)
 
         with pyro.plate("data", x.shape[0]):
             z_mean = torch.zeros(x.shape[0], self.z_dim, dtype=x.dtype, device=self.device)
