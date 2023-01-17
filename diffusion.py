@@ -69,8 +69,13 @@ class DiffusionModel2(nn.Module):
         self.U1 = UpBlock(128, 64, 7, 32)
         self.U2 = UpBlock(128, 32, 14, 32)
         self.U3 = UpBlock(64, 32, 21, 32)
-
-        self.OutConv = nn.Conv2d(32, 1, 3, padding=1)
+        
+        self.time = nn.Linear(32, 32 * 28 * 28)
+        self.ln = nn.LayerNorm((28, 28))
+        self.Out1 = nn.Conv2d(32, 16, 3, padding=1)
+        self.Out2 = nn.Conv2d(16, 1, 3, padding=1)
+        
+        self.relu = nn.ReLU()
         
     def alphabar(self, t):
         alpha = torch.zeros(t.shape[0], device=self.device)
@@ -120,8 +125,11 @@ class DiffusionModel2(nn.Module):
         
         x = torch.cat([x, x_to_U3], dim=1)
         x = self.U3(x, T)
-
-        x = self.OutConv(x)
+        
+        Tx = self.relu(self.time(T))
+        x = Tx + x
+        x = self.ln(self.relu(self.Out1(x)))
+        x = self.Out2(x)
 
         return x
 
