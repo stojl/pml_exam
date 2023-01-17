@@ -83,7 +83,7 @@ class BayesianVAE(nn.Module):
         b1_mean = pyro.param("b1_mean").item()
         b1_sd = pyro.param("b1_sd").item()
         
-        w1 = torch.distributions.Normal(w1_mean, w1_sd).expand([self.z_dim, self.h2_dim]).sample()
+        w1 = torch.distributions.Normal(w1_mean, w1_sd).expand([self.h2_dim, self.z_dim]).sample()
         b1 = torch.distributions.Normal(b1_mean, b1_sd).expand([self.h2_dim]).sample()
         w1 = nn.Parameter(w1)
         b1 = nn.Parameter(b1)
