@@ -60,7 +60,9 @@ class BayesianVAE(nn.Module):
             print(h2.device)
             img = self.sigmoid(h2 @ w3 + b3)
             print(img.device)
-            pyro.sample("obs", pdist.Bernoulli(img, validate_args = False).to_event(1), obs=x.reshape(-1, 784))
+            t = pyro.sample("obs", pdist.Bernoulli(img, validate_args = False).to_event(1), obs=x.reshape(-1, 784))
+            print(t.device)
+            return t
             
     def guide(self, x):
         pyro.module("encoder", self.encoder)
@@ -98,7 +100,9 @@ class BayesianVAE(nn.Module):
             print(z_mean.device)
             print(z_var.device)
             # Reparametrization trick in disguise
-            pyro.sample("z", pdist.Normal(z_mean, z_var).to_event(1))
+            t = pyro.sample("z", pdist.Normal(z_mean, z_var).to_event(1))
+            print(t.device)
+            return t
             
     def reconstruct_img(self, x):
         z_mean, z_var = self.encoder(x)
