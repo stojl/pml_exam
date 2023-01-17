@@ -58,7 +58,7 @@ class DiffusionModel2(nn.Module):
     def __init__(self, beta):
         super(DiffusionModel2, self).__init__()
         
-        self.device = device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.beta = beta.to(self.device) # Decay schedule
         self.T = beta.shape[0]
 
