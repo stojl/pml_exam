@@ -23,7 +23,7 @@ class BayesianVAE(nn.Module):
         self.h1_dim = h1_dim
         self.h2_dim = h2_dim
         self.encoder = encoder
-        self.sd = sd
+        self.sd = torch.tensor(sd, device = self.device)
         
         if use_cuda:
             self.cuda()
