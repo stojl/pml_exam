@@ -64,12 +64,9 @@ class DiffusionModel2(nn.Module):
 
         self.D1 = DownBlock(1, 32, 28, 32) # D1 -> U3
         self.D2 = DownBlock(32, 64, 21, 32) # D2 -> U2
-        self.A1 = nn.MultiheadAttention(64 * 14 * 14, 4, batch_first=True)
         self.D3 = DownBlock(64, 128, 14, 32)
-        self.A2 = nn.MultiheadAttention(128 * 7 * 7, 4, batch_first=True)
 
         self.U1 = UpBlock(128, 64, 7, 32)
-        self.A3 = nn.MultiheadAttention(64 * 14 * 14, 4, batch_first=True)
         self.U2 = UpBlock(128, 32, 14, 32)
         self.U3 = UpBlock(64, 32, 21, 32)
         
@@ -120,25 +117,10 @@ class DiffusionModel2(nn.Module):
         T = self.embedtime(t, 32)
         x_to_U3 = self.D1(x, T)
         x_to_U2 = self.D2(x_to_U3, T)
-        
-        x = x.view(-1, 64 * 14 * 14)
-        attention, _ = self.A1(x, x, x)
-        x = attention + x
-        x = x.view(-1, 64, 14, 14)
-        
+               
         x = self.D3(x_to_U2, T)
-        
-        x = x.view(-1, 128 * 7 * 7)
-        attention, _ = self.A2(x, x, x)
-        x = attention + x
-        x = x.view(-1, 128, 7, 7)
 
         x = self.U1(x, T)
-        
-        x = x.view(-1, 64 * 14 * 14)
-        attention, _ = self.A3(x, x, x)
-        x = attention + x
-        x = x.view(-1, 64, 14, 14)
         
         x = torch.cat([x, x_to_U2], dim=1)
         x = self.U2(x, T)
