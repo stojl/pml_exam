@@ -14,4 +14,4 @@ TrainedConvVAE = VAE.VAE(CED.ConvEncoder(2, 200), CED.ConvDecoder(2, 200))
 TrainedConvVAE.load_state_dict(torch.load('betterconv.pth', torch.device('cpu')))
 
 TrainedConvVAE2 = VAE2.VAE(CED.ConvEncoder(2, 200), CED.ConvDecoder(2, 200), 0.05)
-TrainedConvVAE2.load_state_dict(torch.load('NewConvModel.pth', torch.device('cpu')))
+TrainedConvVAE2.load_state_dict(torch.load('NewConvModel2.pth', torch.device('cpu')))

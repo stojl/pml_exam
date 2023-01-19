@@ -112,6 +112,28 @@ class DiffusionModel2(nn.Module):
             samples[0] = (xt - beta * eps / (torch.sqrt(1 - alfabar))) / torch.sqrt(alfa)
         
         return samples
+    
+    def sample_image_one(self):        
+        samples = torch.randn(784, device=self.device)
+        
+        with torch.no_grad():
+            for t in torch.arange(self.T - 1, 0, -1):
+                beta = self.beta[t]
+                alfa = 1 - beta
+                alfabar = self.alphabar(torch.tensor([t + 1], device=self.device))
+                z = torch.randn(784, device=self.device)
+                xt = samples
+                eps = self.forward(xt.view(1, 1, 28, 28), torch.tensor([t + 1], device=self.device)).view(784)
+                samples[t] = (xt - beta * eps / (torch.sqrt(1 - alfabar))) / torch.sqrt(alfa) + torch.sqrt(beta) * z
+            
+            beta = self.beta[0]
+            alfa = 1 - beta
+            alfabar  = self.alphabar(torch.tensor([1], device=self.device))
+            xt = samples
+            eps = self.forward(xt.view(1, 1, 28, 28), torch.tensor([1], device=self.device)).view(784)
+            samples = (xt - beta * eps / (torch.sqrt(1 - alfabar))) / torch.sqrt(alfa)
+        
+        return samples
 
     def forward(self, x, t):
         T = self.embedtime(t, 32)

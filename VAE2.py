@@ -49,3 +49,18 @@ class VAE(nn.Module):
         img = self.decoder.forward(z)
         
         return img
+    
+    def reconstruction_model(self, x):
+        pyro.module('encoder', self.encoder)
+        pyro.module('decoder', self.decoder)
+        
+        with pyro.iarange('data', x.shape[0]):
+            z_mean, z_sd = self.encoder(x)
+            
+            base_dist = pdist.Normal(z_mean, z_sd).independent(1)
+            Z = pyro.sample('z', base_dist)
+            
+            img = self.decoder(Z)
+            return pyro.sample(
+                'reconstruction', pdist.Normal(loc=img, scale=torch.tensor([self.sd], device=x.device).repeat(784)).independent(1)
+            )
