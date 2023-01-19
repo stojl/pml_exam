@@ -1,128 +1,155 @@
 import torch
-import gpytorch
-import pyro
-from pyro.infer.mcmc import NUTS, MCMC, HMC
 
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+import pyro
 import pyro.contrib.gp as gp
 import pyro.distributions as dist
-pyro.set_rng_seed(0)
+import arviz as az
+import warnings
+warnings.warn('ignore')
+
+# Setting up D
 
 def target_func(x):
   return torch.sin(20*x) + 2*torch.cos(14*x) - 2*torch.sin(6*x)
 
-xData = torch.tensor([-1, -1/2, 0, 1/2, 1])
+X = torch.tensor([-1, -1/2, 0, 1/2, 1])
 
-yData = target_func(xData)
+y = target_func(X)
 
+# Initial MCMC sampling
+
+pyro.clear_param_store()
 kernel = gp.kernels.RBF(input_dim=1)
+kernel.variance = pyro.nn.PyroSample(pyro.distributions.LogNormal(torch.tensor(-1.0), torch.tensor(1.0)))
+kernel.lengthscale = pyro.nn.PyroSample(pyro.distributions.LogNormal(torch.tensor(0.0), torch.tensor(2.0)))
+gpmodel = gp.models.GPRegression(X, y, kernel=kernel, noise = torch.tensor(1e-4))
 
-kernel.variance = pyro.nn.PyroSample(dist.Logno(torch.tensor(0.5), torch.tensor(1.5)))
+hmc_kernel = pyro.infer.NUTS(gpmodel.model)
 
-kernel.lengthscale = pyro.nn.PyroSample(dist.Uniform(torch.tensor(1.0), torch.tensor(3.0)))
-
-gpr = gp.models.GPRegression(xData, yData, kernel)
-
-hmc_kernel = HMC(gpr.model)
-
-mcmc = MCMC(hmc_kernel, num_samples=10)
-
+mcmc = pyro.infer.MCMC(hmc_kernel, num_samples=500, warmup_steps = 5)
+    
 mcmc.run()
 
-ls_name = "kernel.lengthscale"
+# Sample from prior distributions of theta
 
-posterior_ls = mcmc.get_samples()[ls_name]
+lengthprior = torch.distributions.LogNormal(-1, 1)
+varianceprior = torch.distributions.LogNormal(0, 2)
+x1 = lengthprior.sample_n(500)
+y1 = varianceprior.sample_n(500)
 
-optimizer = torch.optim.Adam(gpr.parameters(), lr=0.01)
+f, ax = plt.subplots()
+ax.set(xscale="log", yscale="log")
+sns.scatterplot(x = x1, y = y1)
+ax.set_xlabel("Lengthscale $\sigma_l^2$", fontsize = 14)
+ax.set_ylabel("Variance $\sigma_s^2$", fontsize = 14)
+plt.yticks(fontsize=12)
+plt.xticks(fontsize=12)
+plt.show()
 
-loss_fn = pyro.infer.TraceMeanField_ELBO().differentiable_loss
+# Sample from posterior distribution of theta
 
-for i in range(1000):
+hyperparam = mcmc.get_samples()
+x1 = hyperparam["kernel.lengthscale"][0:499]
+y1 = hyperparam["kernel.variance"][0:499]
 
-    optimizer.zero_grad()
+f, ax = plt.subplots()
+ax.set(xscale="log", yscale="log")
+sns.scatterplot(x = x1, y = y1)
+ax.set_xlabel("Lengthscale $\sigma_l^2$", fontsize = 14)
+ax.set_ylabel("Variance $\sigma_s^2$", fontsize = 14)
+plt.yticks(fontsize=12)
+plt.xticks(fontsize=12)
+plt.show()
 
-    loss = loss_fn(gpr.model, gpr.guide)  
-
-    loss.backward()  
-
-    optimizer.step()
-
-gpr.mod
-
-
-# Gammel kode
-
-
-class ExactGPModel(gpytorch.models.ExactGP):
-    def __init__(self, xData, yData, likelihood):
-        super(ExactGPModel, self).__init__(xData, yData, likelihood)
-        self.mean_module = gpytorch.means.ConstantMean()
-        self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
-
-    def forward(self, x):
-        mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
-        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
-
-
-from gpytorch.priors import LogNormalPrior, NormalPrior, UniformPrior
-# Use a positive constraint instead of usual GreaterThan(1e-4) so that LogNormal has support over full range.
-likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.Positive())
-model = ExactGPModel(xData, yData, likelihood)
-
-model.mean_module.register_prior("mean_prior", UniformPrior(-1, 1), "constant")
-model.covar_module.base_kernel.register_prior("lengthscale_prior", UniformPrior(0.01, 0.5), "lengthscale")
-model.covar_module.register_prior("outputscale_prior", UniformPrior(1, 2), "outputscale")
-likelihood.register_prior("noise_prior", UniformPrior(0.01, 0.5), "noise")
-
-mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
-
-
-
-import os
-smoke_test = ('CI' in os.environ)
-
-num_samples = 2000
-warmup_steps = 500
-
-def pyro_model(x, y):
-    with gpytorch.settings.fast_computations(False, False, False):
-        sampled_model = model.pyro_sample_from_prior()
-        output = sampled_model.likelihood(sampled_model(x))
-        pyro.sample("obs", output, obs=y)
-    return y
-
-nuts_kernel = NUTS(pyro_model)
-mcmc_run = MCMC(nuts_kernel, num_samples=num_samples, warmup_steps=warmup_steps)
-mcmc_run.run(xData, yData)
-
-model.pyro_load_from_samples(mcmc_run.get_samples())
-
-model.eval()
-test_x = torch.linspace(-1, 1, 101).unsqueeze(-1)
-test_y = target_func(test_x)
-expanded_test_x = test_x.unsqueeze(0).repeat(num_samples, 1, 1)
-output = model(expanded_test_x)
-
-np.mean(output.cov.detach().numpy(), axis = 0)
-
+# Plot mean and confidence intervals
 
 with torch.no_grad():
-    # Initialize plot
-    f, ax = plt.subplots(1, 1, figsize=(4, 3))
+    x_new = torch.linspace(-1, 1, 200)
+    mean_new = gpmodel.forward(x_new)[0] # Returns the mean of our posterior samples
+    sd_new = gpmodel.forward(x_new)[1] # Returns the standard deviation of our posteriour samples
+    f, ax = plt.subplots(1)
+    sns.lineplot(x = x_new, y = mean_new, ax=ax, label = "$m(x^*)$")
+    sns.scatterplot(x = X, y = y, ax=ax, s = 75)
+    ax.fill_between(x_new, mean_new+2*sd_new, mean_new-2*sd_new, facecolor='blue', alpha=0.4)
+    sns.lineplot(x = x_new, y = target_func(x_new), ax = ax, label =  "$f$", color = "red")
+    ax.legend(loc='lower right', fontsize = 12)
+    ax.set_xlabel("$x^*$", fontsize = 14)
+    ax.set_ylabel("$y$", fontsize = 14)
+    plt.yticks([-5, -4, -3, -2, -1, 0, 1, 2, 3],fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.show()
+    
+# arviz diagnostics
 
-    # Plot training data as black stars
-    ax.plot(xData.numpy(), yData.numpy(), 'k*', zorder=10)
+sum1 = az.summary(diag)
+params =  az.extract(diag)
 
-        # Plot predictive means as blue line
-    ax.plot(test_x.numpy(), np.mean(output.mean.detach().numpy(), axis = 0), 'b', linewidth=0.3)
+samples_kernel_lengthscale = params["kernel.lengthscale"]
+samples_kernel_variance = params["kernel.variance"]
 
-    # Shade between the lower and upper confidence bounds
-    # ax.fill_between(test_x.numpy(), lower.numpy(), upper.numpy(), alpha=0.5)
-    ax.set_ylim([-3, 3])
-    ax.legend(['Observed Data', 'Sampled Means'])
+xs = np.arange(1, samples_kernel_variance.shape[0]+1, 1)
+
+f, ax = plt.subplots()
+
+#sns.lineplot(x = xs, y = samples_kernel_lengthscale, ax = ax)
+sns.lineplot(x = xs, y = samples_kernel_variance, ax = ax)
+ax.set_xlabel("Number of sample (after warmup)", fontsize = 12)
+ax.set_ylabel("Value of $\sigma_v^2$", fontsize = 12)
+plt.show()
+
+# arviz hyperparameter tuning
+warmup_array = np.array([25, 50, 100, 150, 300, 400, 500])
+diag_array = np.empty([warmup_array.size, 6])
+mean_calc_arrary = np.empty([4,4])
+
+
+for i in range(warmup_array.size):
+    print(str(i) + ": Start")
+    for j in range(4):
+        pyro.clear_param_store()
+        kernel = gp.kernels.RBF(input_dim=1)
+        kernel.variance = pyro.nn.PyroSample(pyro.distributions.LogNormal(torch.tensor(-1.0), torch.tensor(1.0)))
+        kernel.lengthscale = pyro.nn.PyroSample(pyro.distributions.LogNormal(torch.tensor(0.0), torch.tensor(2.0)))
+        gpmodel = gp.models.GPRegression(X, y, kernel=kernel, noise = torch.tensor(1e-4))
+
+        hmc_kernel = pyro.infer.NUTS(gpmodel.model)
+
+        mcmc = pyro.infer.MCMC(hmc_kernel, num_samples=1500, warmup_steps = warmup_array[i])
+        mcmc.run()
+        print(str(i) + ": past MCMC")
+        
+        diag = az.from_pyro(mcmc)
+        params =  az.extract(diag)
+        print(str(i) + ": past arviz")
+        sum2 = az.summary(diag)
+        mean_calc_arrary[j][0] = sum2["ess_bulk"][0]
+        mean_calc_arrary[j][1] = sum2["ess_bulk"][1]
+        mean_calc_arrary[j][2] = sum2["ess_tail"][0]
+        mean_calc_arrary[j][3] = sum2["ess_tail"][1]
+
+    temp_array = np.mean(mean_calc_arrary, axis = 0)
+    
+    diag_array[i][0] = temp_array[0]
+    diag_array[i][1] = temp_array[1]
+    diag_array[i][2] = temp_array[2]
+    diag_array[i][3] = temp_array[3]
+
+# And plotting of results
+
+f, ax = plt.subplots(1, 1)
+
+ax.plot(warmup_array, diag_array[:, 0], color="blue", label="Length_scale (ess_bulk)", linestyle="-")
+ax.plot(warmup_array, diag_array[:, 1], color="red", label="Variance (ess_bulk)", linestyle="-")
+ax.plot(warmup_array, diag_array[:, 2], color="green", label="Length_scale (ess_tail)", linestyle="-")
+ax.plot(warmup_array, diag_array[:, 3], color="yellow", label="Variance (ess_tail)", linestyle="-")
+ax.set_ylabel("Effective sampling size $(ess)$", fontsize = 12)
+ax.set_xlabel("Number of warmup samples $(W)$", fontsize = 12)
+ax.legend(loc='lower right')
 
 plt.show()
+
+
