@@ -5,13 +5,14 @@ import pyro
 import pyro.distributions as pdist
 
 class VAE(nn.Module):
-    def __init__(self, encoder, decoder, use_cuda=False):
+    def __init__(self, encoder, decoder, sd, use_cuda=False):
         super().__init__()
         
         assert(encoder.z_dim == decoder.z_dim)
         
         self.encoder = encoder
         self.decoder = decoder
+        self.sd = sd
         
         self.use_cuda = use_cuda
         
@@ -28,9 +29,9 @@ class VAE(nn.Module):
             
             z = pyro.sample("z", pdist.Normal(z_mean, z_var).to_event(1))
             
-            img, img_sd = self.decoder.forward(z)
+            img = self.decoder.forward(z)
             
-            pyro.sample("obs", pdist.Normal(loc = img, scale = img_sd).to_event(1), obs=x.reshape(-1, 784))
+            pyro.sample("obs", pdist.Normal(loc = img, scale=torch.tensor([self.sd], device=x.device).repeat(784)).to_event(1), obs=x.reshape(-1, 784))
             
     def guide(self, x):
         
