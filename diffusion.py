@@ -124,7 +124,7 @@ class DiffusionModel2(nn.Module):
                 z = torch.randn(784, device=self.device)
                 xt = samples
                 eps = self.forward(xt.view(1, 1, 28, 28), torch.tensor([t + 1], device=self.device)).view(784)
-                samples[t] = (xt - beta * eps / (torch.sqrt(1 - alfabar))) / torch.sqrt(alfa) + torch.sqrt(beta) * z
+                samples = (xt - beta * eps / (torch.sqrt(1 - alfabar))) / torch.sqrt(alfa) + torch.sqrt(beta) * z
             
             beta = self.beta[0]
             alfa = 1 - beta
