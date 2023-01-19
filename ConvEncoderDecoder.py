@@ -29,17 +29,23 @@ class ConvDecoder(nn.Module):
             nn.ReLU(),
             nn.ConvTranspose2d(16, 16, 4),
             nn.LayerNorm((25, 25)),
-            nn.ReLU(),
-            nn.ConvTranspose2d(16, 1, 4),
-            nn.Sigmoid()
+            nn.ReLU()            
         )
+        
+        self.sigmoid = nn.Sigmoid()
+        self.cout = nn.ConvTranspose2d(16, 1, 4)
+        self.l3 = nn.Linear(16 * 25 * 25, 784)
         
     def forward(self, z):
         
         z = self.l1(z)
         z = z.view(-1, 32, 13, 13)
         z = self.l2(z)
-        return z.reshape(-1, 784)
+        
+        img = self.sigmoid(self.cout(z))
+        sd = torch.exp(self.l3(z.view(-1, 16 * 25 * 25)))
+        
+        return img.reshape(-1, 784), sd
 
 class ConvEncoder(nn.Module):
     def __init__(self, z_dim, hidden_dim):

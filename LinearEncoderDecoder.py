@@ -10,6 +10,7 @@ class LinearDecoder(nn.Module):
             self.fc1 = nn.Linear(z_dim, h2_dim)
             self.fc1a = nn.Linear(h2_dim, h1_dim)
             self.fc2 = nn.Linear(h1_dim, 784)
+            self.sdl = nn.Linear(h1_dim, 784)
                
             self.relu = nn.ReLU()
             self.sigmoid = nn.Sigmoid()
@@ -19,7 +20,8 @@ class LinearDecoder(nn.Module):
             h1a = self.relu(self.fc1a(h1))
             
             img = self.sigmoid(self.fc2(h1a))
-            return img
+            sd = torch.exp(self.sdl(h1a))
+            return img, sd
 
 class LinearEncoder(nn.Module):
         def __init__(self, z_dim, h1_dim, h2_dim):

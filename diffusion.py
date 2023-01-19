@@ -84,7 +84,7 @@ class DiffusionModel2(nn.Module):
         return alpha
 
     def embedtime(self, t, embedding_size):
-        w = 1.0 / (10000 ** (torch.arange(0, embedding_size, 2, dtype=torch.float32, device=self.device) / embedding_size))
+        w = 1.0 / (10000 ** (torch.arange(0, embedding_size, 2, device=self.device) / embedding_size))
         y = torch.sin(t.view(t.shape[0], 1).repeat(1, embedding_size // 2) * w)
         x = torch.cos(t.view(t.shape[0], 1).repeat(1, embedding_size // 2) * w)
         return torch.cat([x, y], dim=1)
