@@ -1,3 +1,5 @@
+# This is the source code for the second part of assignement 2 in the PML exam 2022/2023
+
 import torch
 
 import numpy as np
@@ -11,6 +13,8 @@ import arviz as az
 import warnings
 warnings.warn('ignore')
 
+# Setup
+
 def target_func(x):
   return torch.sin(20*x) + 2*torch.cos(14*x) - 2*torch.sin(6*x)
 
@@ -20,6 +24,7 @@ y = target_func(X)
 
 x_test = torch.linspace(-1, 1, 200)
 
+# Minimization
 
 for i in range(6):
     print(i)
@@ -43,7 +48,8 @@ for i in range(6):
 
     while(True):
         try:
-            idx = torch.randint(0, 100, (1,))
+            # Sample theta
+            idx = torch.randint(0, 100, (1,)) 
 
             gpmodel.kernel.variance = y1[idx]
 
@@ -82,7 +88,6 @@ for i in range(6):
         ax.fill_between(x_test, mean_new+2*sd_new, mean_new-2*sd_new, facecolor='blue', alpha=0.3)
 
         sns.lineplot(x = x_test, y = samples[0], label = "$f^*$", ax = ax)
-        #sns.scatterplot(x = X, y = y, marker= 'o', s = 50)
 
         ax.scatter(xstar, min_value, marker='o', s = 50, color = "blue")
         ax.scatter(xstar2, samples[0][max_idx.item()].reshape(1), marker = 'o', s = 50 ,color = 'red')
@@ -93,7 +98,7 @@ for i in range(6):
         ax.set_title("Visualization for k = "+ str(i))
         plt.show()
   
-
+# get estimate
 ymin, idxmin = torch.min(y, dim = 0, keepdim=False)
 argmin = X[idxmin]
 argmin

@@ -20,7 +20,7 @@ X = torch.tensor([-1, -1/2, 0, 1/2, 1])
 
 y = target_func(X)
 
-# Initial MCMC sampling
+# Initial MCMC sampling and model specification
 
 pyro.clear_param_store()
 kernel = gp.kernels.RBF(input_dim=1)
@@ -34,7 +34,7 @@ mcmc = pyro.infer.MCMC(hmc_kernel, num_samples=500, warmup_steps = 5)
     
 mcmc.run()
 
-# Sample from prior distributions of theta
+# Sample from prior distributions of theta to get plot
 
 lengthprior = torch.distributions.LogNormal(-1, 1)
 varianceprior = torch.distributions.LogNormal(0, 2)
@@ -50,7 +50,7 @@ plt.yticks(fontsize=12)
 plt.xticks(fontsize=12)
 plt.show()
 
-# Sample from posterior distribution of theta
+# Sample from posterior distribution of theta to get plot
 
 hyperparam = mcmc.get_samples()
 x1 = hyperparam["kernel.lengthscale"][0:499]
